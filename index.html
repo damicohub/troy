@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Troy Damico - Sitework Foreman</title>
+    <title>Troy Damico - Time Tracking</title>
     <style>
         * {
             margin: 0;
@@ -16,60 +16,140 @@
             line-height: 1.6;
             color: #333;
             background-color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            max-width: 800px;
+            margin: 2rem auto;
             padding: 2rem;
         }
 
         header {
             background-color: #2c3e50;
             color: white;
-            padding: 3rem 0;
+            padding: 1.5rem 0;
             text-align: center;
         }
 
         h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
         }
 
         .subtitle {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: #ecf0f1;
         }
 
-        .content {
+        .time-card {
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             padding: 2rem;
             margin-top: 2rem;
+            text-align: center;
         }
 
-        .section {
-            margin-bottom: 2rem;
+        .current-time {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 1rem 0;
         }
 
-        h2 {
+        .status {
+            font-size: 1.2rem;
+            margin: 1rem 0;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .status.clocked-in {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .status.clocked-out {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+
+        button {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .clock-in-btn {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .clock-out-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .view-details-btn {
+            background-color: #3498db;
+            color: white;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .today-summary {
+            margin-top: 2rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .today-summary h2 {
             color: #2c3e50;
             margin-bottom: 1rem;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 0.5rem;
         }
 
-        .contact-info {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+        .time-entries {
+            list-style: none;
         }
 
-        .company-logo {
-            max-width: 200px;
-            margin: 2rem auto;
-            display: block;
+        .time-entries li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .time-entries li:last-child {
+            border-bottom: none;
+        }
+
+        .daily-total {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid #dee2e6;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .session-time {
+            color: #666;
+            font-size: 0.9rem;
+            margin-left: 0.5rem;
         }
 
         @media (max-width: 768px) {
@@ -77,12 +157,12 @@
                 padding: 1rem;
             }
             
-            header {
-                padding: 2rem 0;
+            .button-group {
+                flex-direction: column;
             }
             
-            h1 {
-                font-size: 2rem;
+            button {
+                width: 100%;
             }
         }
     </style>
@@ -91,41 +171,154 @@
     <header>
         <div class="container">
             <h1>Troy Damico</h1>
-            <p class="subtitle">Sitework Foreman</p>
+            <p class="subtitle">Time Tracking</p>
         </div>
     </header>
 
     <main class="container">
-        <div class="content">
-            <div class="section">
-                <h2>About</h2>
-                <p>Experienced sitework foreman at Damico Construction, leading and managing construction site operations with expertise and dedication.</p>
+        <div class="time-card">
+            <div class="current-time" id="current-time">00:00:00</div>
+            <div class="status clocked-out" id="status">Currently Clocked Out</div>
+            
+            <div class="button-group">
+                <button class="clock-in-btn" id="clock-in-btn">Clock In</button>
+                <button class="clock-out-btn" id="clock-out-btn" disabled>Clock Out</button>
+                <button class="view-details-btn" onclick="window.open('/troy/index.html', '_blank')">View Details</button>
             </div>
 
-            <div class="section">
-                <h2>Role & Responsibilities</h2>
-                <ul>
-                    <li>Overseeing sitework operations and construction activities</li>
-                    <li>Managing and coordinating construction crews</li>
-                    <li>Ensuring safety compliance and quality standards</li>
-                    <li>Planning and executing site preparation work</li>
-                    <li>Maintaining project timelines and budgets</li>
+            <div class="today-summary">
+                <h2>Today's Summary</h2>
+                <ul class="time-entries" id="time-entries">
+                    <li>No entries for today</li>
                 </ul>
-            </div>
-
-            <div class="section">
-                <h2>Company Information</h2>
-                <p>Damico Construction</p>
-                <p>Leading construction company specializing in sitework and infrastructure development</p>
-            </div>
-
-            <div class="section">
-                <h2>Contact Information</h2>
-                <div class="contact-info">
-                    <p>Please contact through Damico Construction's main office</p>
-                </div>
+                <div class="daily-total" id="daily-total">Total Hours Today: 0:00</div>
             </div>
         </div>
     </main>
+
+    <script>
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('current-time').textContent = timeString;
+        }
+
+        // Update time every second
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Time tracking functionality
+        let isClockedIn = false;
+        let timeEntries = [];
+
+        const clockInBtn = document.getElementById('clock-in-btn');
+        const clockOutBtn = document.getElementById('clock-out-btn');
+        const statusElement = document.getElementById('status');
+        const timeEntriesList = document.getElementById('time-entries');
+        const dailyTotalElement = document.getElementById('daily-total');
+
+        function calculateTimeDifference(startTime, endTime) {
+            const start = new Date(`1970-01-01T${startTime}`);
+            const end = new Date(`1970-01-01T${endTime}`);
+            const diffMs = end - start;
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            return `${diffHours}:${diffMinutes.toString().padStart(2, '0')}`;
+        }
+
+        function calculateDailyTotal() {
+            let totalMinutes = 0;
+            for (let i = 0; i < timeEntries.length - 1; i += 2) {
+                if (timeEntries[i + 1]) {
+                    const startTime = timeEntries[i].time;
+                    const endTime = timeEntries[i + 1].time;
+                    const start = new Date(`1970-01-01T${startTime}`);
+                    const end = new Date(`1970-01-01T${endTime}`);
+                    totalMinutes += (end - start) / (1000 * 60);
+                }
+            }
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = Math.floor(totalMinutes % 60);
+            return `${hours}:${minutes.toString().padStart(2, '0')}`;
+        }
+
+        clockInBtn.addEventListener('click', () => {
+            const now = new Date();
+            timeEntries.push({
+                type: 'in',
+                time: now.toLocaleTimeString('en-US', { 
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })
+            });
+            
+            isClockedIn = true;
+            updateUI();
+            updateTimeEntries();
+        });
+
+        clockOutBtn.addEventListener('click', () => {
+            const now = new Date();
+            timeEntries.push({
+                type: 'out',
+                time: now.toLocaleTimeString('en-US', { 
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })
+            });
+            
+            isClockedIn = false;
+            updateUI();
+            updateTimeEntries();
+        });
+
+        function updateUI() {
+            clockInBtn.disabled = isClockedIn;
+            clockOutBtn.disabled = !isClockedIn;
+            statusElement.textContent = isClockedIn ? 'Currently Clocked In' : 'Currently Clocked Out';
+            statusElement.className = `status ${isClockedIn ? 'clocked-in' : 'clocked-out'}`;
+        }
+
+        function updateTimeEntries() {
+            if (timeEntries.length === 0) {
+                timeEntriesList.innerHTML = '<li>No entries for today</li>';
+                dailyTotalElement.textContent = 'Total Hours Today: 0:00';
+                return;
+            }
+
+            let entriesHtml = '';
+            for (let i = 0; i < timeEntries.length; i += 2) {
+                const entry = timeEntries[i];
+                const nextEntry = timeEntries[i + 1];
+                let sessionTime = '';
+                
+                if (nextEntry) {
+                    sessionTime = calculateTimeDifference(entry.time, nextEntry.time);
+                }
+                
+                entriesHtml += `
+                    <li>
+                        ${entry.type === 'in' ? 'Clock In' : 'Clock Out'}: ${entry.time}
+                        ${sessionTime ? `<span class="session-time">(${sessionTime} hours)</span>` : ''}
+                    </li>
+                    ${nextEntry ? `<li>${nextEntry.type === 'in' ? 'Clock In' : 'Clock Out'}: ${nextEntry.time}</li>` : ''}
+                `;
+            }
+
+            timeEntriesList.innerHTML = entriesHtml;
+            dailyTotalElement.textContent = `Total Hours Today: ${calculateDailyTotal()}`;
+        }
+
+        // Initialize UI
+        updateUI();
+    </script>
 </body>
 </html> 
