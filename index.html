@@ -223,6 +223,42 @@
         const timeEntriesList = document.getElementById('time-entries');
         const dailyTotalElement = document.getElementById('daily-total');
 
+        // Get today's date in YYYY-MM-DD format
+        function getTodayDate() {
+            const now = new Date();
+            return now.toISOString().split('T')[0];
+        }
+
+        // Load time entries from localStorage
+        function loadTimeEntries() {
+            const today = getTodayDate();
+            const savedData = localStorage.getItem('timeEntries');
+            
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                // Only load entries from today
+                if (data.date === today) {
+                    timeEntries = data.entries;
+                    isClockedIn = data.isClockedIn;
+                    updateUI();
+                    updateTimeEntries();
+                } else {
+                    // Clear old data if it's a new day
+                    localStorage.removeItem('timeEntries');
+                }
+            }
+        }
+
+        // Save time entries to localStorage
+        function saveTimeEntries() {
+            const data = {
+                date: getTodayDate(),
+                entries: timeEntries,
+                isClockedIn: isClockedIn
+            };
+            localStorage.setItem('timeEntries', JSON.stringify(data));
+        }
+
         function calculateTimeDifference(startTime, endTime) {
             const start = new Date(`1970-01-01T${startTime}`);
             const end = new Date(`1970-01-01T${endTime}`);
@@ -262,6 +298,7 @@
             isClockedIn = true;
             updateUI();
             updateTimeEntries();
+            saveTimeEntries();
         });
 
         clockOutBtn.addEventListener('click', () => {
@@ -278,6 +315,7 @@
             isClockedIn = false;
             updateUI();
             updateTimeEntries();
+            saveTimeEntries();
         });
 
         function updateUI() {
@@ -317,7 +355,8 @@
             dailyTotalElement.textContent = `Total Hours Today: ${calculateDailyTotal()}`;
         }
 
-        // Initialize UI
+        // Initialize UI and load saved data
+        loadTimeEntries();
         updateUI();
     </script>
 </body>
