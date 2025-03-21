@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Troy Damico - Weekly Time Details</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 1.5rem 0;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #ecf0f1;
+        }
+
+        .week-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .week-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #eee;
+        }
+
+        .week-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+        }
+
+        .week-total {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .day-card {
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .day-title {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .day-total {
+            color: #666;
+        }
+
+        .time-entries {
+            list-style: none;
+        }
+
+        .time-entries li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .time-entries li:last-child {
+            border-bottom: none;
+        }
+
+        .session-time {
+            color: #666;
+            font-size: 0.9rem;
+            margin-left: 0.5rem;
+        }
+
+        .current-day {
+            background-color: #e3f2fd;
+            border-left: 4px solid #3498db;
+        }
+
+        .no-entries {
+            color: #666;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .week-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Troy Damico</h1>
+            <p class="subtitle">Weekly Time Details</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="week-card">
+            <div class="week-header">
+                <div class="week-title" id="week-title">Week of Sunday, March 17, 2024</div>
+                <div class="week-total" id="week-total">Total Hours: 0:00</div>
+            </div>
+            <div id="week-entries">
+                <!-- Week entries will be populated here -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Get the start of the current week (Sunday)
+        function getWeekStart() {
+            const now = new Date();
+            const day = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+            const diff = now.getDate() - day;
+            return new Date(now.setDate(diff));
+        }
+
+        // Format date as YYYY-MM-DD
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        // Format date for display (e.g., "Sunday, March 17")
+        function formatDateDisplay(date) {
+            return date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // Calculate time difference between two times
+        function calculateTimeDifference(startTime, endTime) {
+            const start = new Date(`1970-01-01T${startTime}`);
+            const end = new Date(`1970-01-01T${endTime}`);
+            const diffMs = end - start;
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            return `${diffHours}:${diffMinutes.toString().padStart(2, '0')}`;
+        }
+
+        // Calculate total hours for a day's entries
+        function calculateDayTotal(entries) {
+            let totalMinutes = 0;
+            for (let i = 0; i < entries.length - 1; i += 2) {
+                if (entries[i + 1]) {
+                    const startTime = entries[i].time;
+                    const endTime = entries[i + 1].time;
+                    const start = new Date(`1970-01-01T${startTime}`);
+                    const end = new Date(`1970-01-01T${endTime}`);
+                    totalMinutes += (end - start) / (1000 * 60);
+                }
+            }
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = Math.floor(totalMinutes % 60);
+            return `${hours}:${minutes.toString().padStart(2, '0')}`;
+        }
+
+        // Load and display weekly data
+        function loadWeeklyData() {
+            const weekStart = getWeekStart();
+            const weekTitle = document.getElementById('week-title');
+            weekTitle.textContent = `Week of ${formatDateDisplay(weekStart)}`;
+
+            let weekEntriesHtml = '';
+            let totalWeekMinutes = 0;
+
+            // Generate entries for each day of the week
+            for (let i = 0; i < 7; i++) {
+                const currentDate = new Date(weekStart);
+                currentDate.setDate(weekStart.getDate() + i);
+                const dateStr = formatDate(currentDate);
+                const isToday = dateStr === formatDate(new Date());
+
+                // Get entries for this day from localStorage
+                const savedData = localStorage.getItem('timeEntries');
+                let dayEntries = [];
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    if (data.date === dateStr) {
+                        dayEntries = data.entries;
+                    }
+                }
+
+                // Calculate day total
+                const dayTotal = calculateDayTotal(dayEntries);
+                const [hours, minutes] = dayTotal.split(':').map(Number);
+                totalWeekMinutes += hours * 60 + minutes;
+
+                // Generate entries HTML
+                let entriesHtml = '';
+                if (dayEntries.length === 0) {
+                    entriesHtml = '<li class="no-entries">No entries for this day</li>';
+                } else {
+                    for (let j = 0; j < dayEntries.length; j += 2) {
+                        const entry = dayEntries[j];
+                        const nextEntry = dayEntries[j + 1];
+                        let sessionTime = '';
+                        
+                        if (nextEntry) {
+                            sessionTime = calculateTimeDifference(entry.time, nextEntry.time);
+                        }
+                        
+                        entriesHtml += `
+                            <li>
+                                ${entry.type === 'in' ? 'Clock In' : 'Clock Out'}: ${entry.time}
+                                ${sessionTime ? `<span class="session-time">(${sessionTime} hours)</span>` : ''}
+                            </li>
+                            ${nextEntry ? `<li>${nextEntry.type === 'in' ? 'Clock In' : 'Clock Out'}: ${nextEntry.time}</li>` : ''}
+                        `;
+                    }
+                }
+
+                weekEntriesHtml += `
+                    <div class="day-card ${isToday ? 'current-day' : ''}">
+                        <div class="day-header">
+                            <div class="day-title">${formatDateDisplay(currentDate)}</div>
+                            <div class="day-total">Total: ${dayTotal} hours</div>
+                        </div>
+                        <ul class="time-entries">
+                            ${entriesHtml}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // Update week total
+            const weekHours = Math.floor(totalWeekMinutes / 60);
+            const weekMinutes = totalWeekMinutes % 60;
+            document.getElementById('week-total').textContent = 
+                `Total Hours: ${weekHours}:${weekMinutes.toString().padStart(2, '0')}`;
+
+            // Update week entries
+            document.getElementById('week-entries').innerHTML = weekEntriesHtml;
+        }
+
+        // Initialize the page
+        loadWeeklyData();
+    </script>
+</body>
+</html> 
