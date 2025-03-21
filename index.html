@@ -85,6 +85,32 @@
             margin: 2rem 0;
         }
 
+        .manual-entry {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .manual-entry.show {
+            display: block;
+        }
+
+        .manual-entry input {
+            padding: 0.5rem;
+            margin: 0.5rem;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+
+        .manual-entry button {
+            background-color: #3498db;
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
         button {
             padding: 1rem 2rem;
             font-size: 1.1rem;
@@ -186,6 +212,16 @@
                 <button class="view-details-btn" onclick="window.open('troy/details.html', '_blank')">View Details</button>
             </div>
 
+            <div class="manual-entry" id="manual-entry">
+                <h3>Manual Time Entry</h3>
+                <div>
+                    <input type="time" id="manual-time" step="60">
+                    <button onclick="handleManualClockIn()" id="manual-clock-in">Clock In</button>
+                    <button onclick="handleManualClockOut()" id="manual-clock-out">Clock Out</button>
+                    <button onclick="toggleManualEntry()" class="cancel-btn">Cancel</button>
+                </div>
+            </div>
+
             <div class="today-summary">
                 <h2>Today's Summary</h2>
                 <ul class="time-entries" id="time-entries">
@@ -196,17 +232,11 @@
         </div>
     </main>
 
+    <script src="troy/timeTracker.js"></script>
     <script>
         // Update current time
         function updateTime() {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('en-US', { 
-                hour12: false,
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-            document.getElementById('current-time').textContent = timeString;
+            document.getElementById('current-time').textContent = TimeTracker.getCurrentTimeWithSeconds();
         }
 
         // Update time every second
@@ -222,105 +252,84 @@
         const statusElement = document.getElementById('status');
         const timeEntriesList = document.getElementById('time-entries');
         const dailyTotalElement = document.getElementById('daily-total');
+        const manualEntry = document.getElementById('manual-entry');
+        const manualTimeInput = document.getElementById('manual-time');
+        const manualClockInBtn = document.getElementById('manual-clock-in');
+        const manualClockOutBtn = document.getElementById('manual-clock-out');
 
-        // Get today's date in YYYY-MM-DD format
-        function getTodayDate() {
-            const now = new Date();
-            return now.toISOString().split('T')[0];
+        // Set current time as default in manual entry
+        function updateManualTimeInput() {
+            manualTimeInput.value = TimeTracker.getCurrentTime();
         }
 
-        // Load time entries from localStorage
-        function loadTimeEntries() {
-            const today = getTodayDate();
-            const savedData = localStorage.getItem('timeEntries');
-            
-            if (savedData) {
-                const data = JSON.parse(savedData);
-                // Only load entries from today
-                if (data.date === today) {
-                    timeEntries = data.entries;
-                    isClockedIn = data.isClockedIn;
-                    updateUI();
-                    updateTimeEntries();
-                } else {
-                    // Clear old data if it's a new day
-                    localStorage.removeItem('timeEntries');
-                }
+        // Toggle manual entry form
+        function toggleManualEntry() {
+            manualEntry.classList.toggle('show');
+            if (manualEntry.classList.contains('show')) {
+                updateManualTimeInput();
             }
         }
 
-        // Save time entries to localStorage
-        function saveTimeEntries() {
-            const data = {
-                date: getTodayDate(),
-                entries: timeEntries,
-                isClockedIn: isClockedIn
-            };
-            localStorage.setItem('timeEntries', JSON.stringify(data));
-        }
+        // Handle manual clock in
+        function handleManualClockIn() {
+            const selectedTime = manualTimeInput.value;
+            if (!selectedTime) return;
 
-        function calculateTimeDifference(startTime, endTime) {
-            const start = new Date(`1970-01-01T${startTime}`);
-            const end = new Date(`1970-01-01T${endTime}`);
-            const diffMs = end - start;
-            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-            const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-            return `${diffHours}:${diffMinutes.toString().padStart(2, '0')}`;
-        }
-
-        function calculateDailyTotal() {
-            let totalMinutes = 0;
-            for (let i = 0; i < timeEntries.length - 1; i += 2) {
-                if (timeEntries[i + 1]) {
-                    const startTime = timeEntries[i].time;
-                    const endTime = timeEntries[i + 1].time;
-                    const start = new Date(`1970-01-01T${startTime}`);
-                    const end = new Date(`1970-01-01T${endTime}`);
-                    totalMinutes += (end - start) / (1000 * 60);
-                }
-            }
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = Math.floor(totalMinutes % 60);
-            return `${hours}:${minutes.toString().padStart(2, '0')}`;
-        }
-
-        clockInBtn.addEventListener('click', () => {
-            const now = new Date();
             timeEntries.push({
                 type: 'in',
-                time: now.toLocaleTimeString('en-US', { 
-                    hour12: false,
-                    hour: '2-digit',
-                    minute: '2-digit'
-                })
+                time: selectedTime
             });
             
             isClockedIn = true;
             updateUI();
             updateTimeEntries();
-            saveTimeEntries();
-        });
+            TimeTracker.saveTimeEntries(timeEntries, isClockedIn);
+            toggleManualEntry();
+        }
 
-        clockOutBtn.addEventListener('click', () => {
-            const now = new Date();
+        // Handle manual clock out
+        function handleManualClockOut() {
+            const selectedTime = manualTimeInput.value;
+            if (!selectedTime) return;
+
             timeEntries.push({
                 type: 'out',
-                time: now.toLocaleTimeString('en-US', { 
-                    hour12: false,
-                    hour: '2-digit',
-                    minute: '2-digit'
-                })
+                time: selectedTime
             });
             
             isClockedIn = false;
             updateUI();
             updateTimeEntries();
-            saveTimeEntries();
-        });
+            TimeTracker.saveTimeEntries(timeEntries, isClockedIn);
+            toggleManualEntry();
+        }
+
+        // Load time entries from localStorage
+        function loadTimeEntries() {
+            const today = TimeTracker.getTodayDate();
+            timeEntries = TimeTracker.loadTimeEntries(today);
+            const savedData = localStorage.getItem('timeEntries');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                if (data.date === today) {
+                    isClockedIn = data.isClockedIn;
+                    updateUI();
+                    updateTimeEntries();
+                }
+            }
+        }
 
         function updateUI() {
-            clockInBtn.disabled = isClockedIn;
-            clockOutBtn.disabled = !isClockedIn;
+            // Update main buttons
+            clockInBtn.style.display = isClockedIn ? 'none' : 'block';
+            clockOutBtn.style.display = isClockedIn ? 'block' : 'none';
+            clockOutBtn.disabled = false;
+
+            // Update manual entry buttons
+            manualClockInBtn.style.display = isClockedIn ? 'none' : 'block';
+            manualClockOutBtn.style.display = isClockedIn ? 'block' : 'none';
+
+            // Update status
             statusElement.textContent = isClockedIn ? 'Currently Clocked In' : 'Currently Clocked Out';
             statusElement.className = `status ${isClockedIn ? 'clocked-in' : 'clocked-out'}`;
         }
@@ -339,7 +348,7 @@
                 let sessionTime = '';
                 
                 if (nextEntry) {
-                    sessionTime = calculateTimeDifference(entry.time, nextEntry.time);
+                    sessionTime = TimeTracker.calculateTimeDifference(entry.time, nextEntry.time);
                 }
                 
                 entriesHtml += `
@@ -352,8 +361,45 @@
             }
 
             timeEntriesList.innerHTML = entriesHtml;
-            dailyTotalElement.textContent = `Total Hours Today: ${calculateDailyTotal()}`;
+            dailyTotalElement.textContent = `Total Hours Today: ${TimeTracker.calculateDayTotal(timeEntries)}`;
         }
+
+        clockInBtn.addEventListener('click', () => {
+            timeEntries.push({
+                type: 'in',
+                time: TimeTracker.getCurrentTime()
+            });
+            
+            isClockedIn = true;
+            updateUI();
+            updateTimeEntries();
+            TimeTracker.saveTimeEntries(timeEntries, isClockedIn);
+        });
+
+        clockOutBtn.addEventListener('click', () => {
+            timeEntries.push({
+                type: 'out',
+                time: TimeTracker.getCurrentTime()
+            });
+            
+            isClockedIn = false;
+            updateUI();
+            updateTimeEntries();
+            TimeTracker.saveTimeEntries(timeEntries, isClockedIn);
+        });
+
+        // Add event listener for storage changes
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'timeEntries') {
+                const data = JSON.parse(e.newValue);
+                if (data.date === TimeTracker.getTodayDate()) {
+                    timeEntries = data.entries;
+                    isClockedIn = data.isClockedIn;
+                    updateUI();
+                    updateTimeEntries();
+                }
+            }
+        });
 
         // Initialize UI and load saved data
         loadTimeEntries();

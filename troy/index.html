@@ -125,7 +125,140 @@
                     <p>Please contact through Damico Construction's main office</p>
                 </div>
             </div>
+
+            <div class="section">
+                <h2>Time Tracking</h2>
+                <div class="time-tracking">
+                    <div class="current-status">
+                        <p>Current Status: <span id="clock-status">Not Clocked In</span></p>
+                        <p>Current Time: <span id="current-time">--:--</span></p>
+                    </div>
+                    <div class="time-controls">
+                        <button id="clock-in-btn" onclick="handleClockIn()">Clock In</button>
+                        <button id="clock-out-btn" onclick="handleClockOut()" disabled>Clock Out</button>
+                    </div>
+                    <div class="today-entries">
+                        <h3>Today's Entries</h3>
+                        <ul id="today-entries-list"></ul>
+                        <p>Total Hours Today: <span id="today-total">0:00</span></p>
+                    </div>
+                    <div class="navigation">
+                        <a href="details.html" class="view-details">View Weekly Details</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
+
+    <script src="timeTracker.js"></script>
+    <script>
+        let isClockedIn = false;
+        let currentEntries = [];
+
+        function updateCurrentTime() {
+            document.getElementById('current-time').textContent = TimeTracker.getCurrentTime();
+        }
+
+        function updateClockStatus() {
+            const statusElement = document.getElementById('clock-status');
+            const clockInBtn = document.getElementById('clock-in-btn');
+            const clockOutBtn = document.getElementById('clock-out-btn');
+
+            if (isClockedIn) {
+                statusElement.textContent = 'Clocked In';
+                statusElement.style.color = '#27ae60';
+                clockInBtn.disabled = true;
+                clockOutBtn.disabled = false;
+            } else {
+                statusElement.textContent = 'Not Clocked In';
+                statusElement.style.color = '#e74c3c';
+                clockInBtn.disabled = false;
+                clockOutBtn.disabled = true;
+            }
+        }
+
+        function handleClockIn() {
+            const currentTime = TimeTracker.getCurrentTime();
+            currentEntries.push({
+                type: 'in',
+                time: currentTime
+            });
+            isClockedIn = true;
+            TimeTracker.saveTimeEntries(currentEntries, true);
+            updateClockStatus();
+            updateTodayEntries();
+        }
+
+        function handleClockOut() {
+            const currentTime = TimeTracker.getCurrentTime();
+            currentEntries.push({
+                type: 'out',
+                time: currentTime
+            });
+            isClockedIn = false;
+            TimeTracker.saveTimeEntries(currentEntries, false);
+            updateClockStatus();
+            updateTodayEntries();
+        }
+
+        function updateTodayEntries() {
+            const entriesList = document.getElementById('today-entries-list');
+            entriesList.innerHTML = '';
+
+            for (let i = 0; i < currentEntries.length; i += 2) {
+                const entry = currentEntries[i];
+                const nextEntry = currentEntries[i + 1];
+                let sessionTime = '';
+                
+                if (nextEntry) {
+                    sessionTime = TimeTracker.calculateTimeDifference(entry.time, nextEntry.time);
+                }
+
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    ${entry.type === 'in' ? 'Clock In' : 'Clock Out'}: ${entry.time}
+                    ${nextEntry ? ` - ${nextEntry.type === 'in' ? 'Clock In' : 'Clock Out'}: ${nextEntry.time}` : ''}
+                    <span class="session-time">(${sessionTime})</span>
+                `;
+                entriesList.appendChild(li);
+            }
+
+            document.getElementById('today-total').textContent = TimeTracker.calculateDayTotal(currentEntries);
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load existing entries
+            const savedData = localStorage.getItem('timeEntries');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                if (data.date === TimeTracker.getTodayDate()) {
+                    currentEntries = data.entries || [];
+                    isClockedIn = data.isClockedIn || false;
+                }
+            }
+
+            // Update display
+            updateClockStatus();
+            updateTodayEntries();
+            updateCurrentTime();
+
+            // Update time every second
+            setInterval(updateCurrentTime, 1000);
+        });
+
+        // Listen for storage changes
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'timeEntries') {
+                const data = JSON.parse(e.newValue);
+                if (data.date === TimeTracker.getTodayDate()) {
+                    currentEntries = data.entries || [];
+                    isClockedIn = data.isClockedIn || false;
+                    updateClockStatus();
+                    updateTodayEntries();
+                }
+            }
+        });
+    </script>
 </body>
 </html> 
