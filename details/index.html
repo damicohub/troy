@@ -158,62 +158,13 @@
         </div>
     </main>
 
-    <script src="timeTracker.js"></script>
+    <script src="/troy/timeTracker.js"></script>
     <script>
-        // Get the start of the current week (Sunday)
-        function getWeekStart() {
-            const now = new Date();
-            const day = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-            const diff = now.getDate() - day;
-            return new Date(now.setDate(diff));
-        }
-
-        // Format date as YYYY-MM-DD
-        function formatDate(date) {
-            return date.toISOString().split('T')[0];
-        }
-
-        // Format date for display (e.g., "Sunday, March 17")
-        function formatDateDisplay(date) {
-            return date.toLocaleDateString('en-US', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric'
-            });
-        }
-
-        // Calculate time difference between two times
-        function calculateTimeDifference(startTime, endTime) {
-            const start = new Date(`1970-01-01T${startTime}`);
-            const end = new Date(`1970-01-01T${endTime}`);
-            const diffMs = end - start;
-            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-            const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-            return `${diffHours}:${diffMinutes.toString().padStart(2, '0')}`;
-        }
-
-        // Calculate total hours for a day's entries
-        function calculateDayTotal(entries) {
-            let totalMinutes = 0;
-            for (let i = 0; i < entries.length - 1; i += 2) {
-                if (entries[i + 1]) {
-                    const startTime = entries[i].time;
-                    const endTime = entries[i + 1].time;
-                    const start = new Date(`1970-01-01T${startTime}`);
-                    const end = new Date(`1970-01-01T${endTime}`);
-                    totalMinutes += (end - start) / (1000 * 60);
-                }
-            }
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = Math.floor(totalMinutes % 60);
-            return `${hours}:${minutes.toString().padStart(2, '0')}`;
-        }
-
         // Load and display weekly data
         function loadWeeklyData() {
-            const weekStart = getWeekStart();
+            const weekStart = TimeTracker.getWeekStart();
             const weekTitle = document.getElementById('week-title');
-            weekTitle.textContent = `Week of ${formatDateDisplay(weekStart)}`;
+            weekTitle.textContent = `Week of ${TimeTracker.formatDateDisplay(weekStart)}`;
 
             let weekEntriesHtml = '';
             let totalWeekMinutes = 0;
@@ -222,21 +173,19 @@
             for (let i = 0; i < 7; i++) {
                 const currentDate = new Date(weekStart);
                 currentDate.setDate(weekStart.getDate() + i);
-                const dateStr = formatDate(currentDate);
-                const isToday = dateStr === formatDate(new Date());
+                const dateStr = TimeTracker.formatDate(currentDate);
+                const isToday = dateStr === TimeTracker.formatDate(new Date());
 
                 // Get entries for this day from localStorage
-                const savedData = localStorage.getItem('timeEntries');
+                const savedData = localStorage.getItem(`timeEntries_${dateStr}`);
                 let dayEntries = [];
                 if (savedData) {
                     const data = JSON.parse(savedData);
-                    if (data.date === dateStr) {
-                        dayEntries = data.entries || [];
-                    }
+                    dayEntries = data.entries || [];
                 }
 
                 // Calculate day total
-                const dayTotal = calculateDayTotal(dayEntries);
+                const dayTotal = TimeTracker.calculateDayTotal(dayEntries);
                 const [hours, minutes] = dayTotal.split(':').map(Number);
                 totalWeekMinutes += hours * 60 + minutes;
 
@@ -249,55 +198,62 @@
                         const entry = dayEntries[j];
                         const nextEntry = dayEntries[j + 1];
                         let sessionTime = '';
+                        
                         if (nextEntry) {
-                            sessionTime = calculateTimeDifference(entry.time, nextEntry.time);
+                            sessionTime = TimeTracker.calculateTimeDifference(entry.time, nextEntry.time);
                         }
+
+                        // Format times according to user preference
+                        const formattedEntryTime = TimeTracker.formatTimeForDisplay(entry.time);
+                        const formattedNextTime = nextEntry ? TimeTracker.formatTimeForDisplay(nextEntry.time) : '';
+
                         entriesHtml += `
                             <li>
-                                ${entry.type === 'in' ? 'Clock In' : 'Clock Out'}: ${entry.time}
-                                ${nextEntry ? ` - ${nextEntry.type === 'in' ? 'Clock In' : 'Clock Out'}: ${nextEntry.time}` : ''}
-                                <span class="session-time">(${sessionTime})</span>
-                            </li>
-                        `;
+                                ${entry.type === 'in' ? 'Clock In' : 'Clock Out'}: ${formattedEntryTime}
+                                ${sessionTime ? `<span class="session-time">(${sessionTime} hours)</span>` : ''}
+                            </li>`;
+                        if (nextEntry) {
+                            entriesHtml += `
+                            <li>
+                                ${nextEntry.type === 'in' ? 'Clock In' : 'Clock Out'}: ${formattedNextTime}
+                            </li>`;
+                        }
                     }
                 }
 
-                // Add day card to week entries
-                weekEntriesHtml += `
-                    <div class="day-card ${isToday ? 'current-day' : ''}">
+                // Create day card
+                const dayCard = `
+                    <div class="day-card${isToday ? ' current-day' : ''}">
                         <div class="day-header">
-                            <div class="day-title">${formatDateDisplay(currentDate)}</div>
-                            <div class="day-total">Total: ${dayTotal}</div>
+                            <div class="day-title">${TimeTracker.formatDateDisplay(currentDate)}</div>
+                            <div class="day-total">Total: ${dayTotal} hours</div>
                         </div>
                         <ul class="time-entries">
                             ${entriesHtml}
                         </ul>
-                    </div>
-                `;
+                    </div>`;
+                weekEntriesHtml += dayCard;
             }
 
             // Update week total
             const weekHours = Math.floor(totalWeekMinutes / 60);
             const weekMinutes = totalWeekMinutes % 60;
-            const weekTotal = `${weekHours}:${weekMinutes.toString().padStart(2, '0')}`;
-            document.getElementById('week-total').textContent = `Total Hours: ${weekTotal}`;
+            document.getElementById('week-total').textContent = 
+                `Total Hours: ${weekHours}:${weekMinutes.toString().padStart(2, '0')}`;
 
             // Update week entries
             document.getElementById('week-entries').innerHTML = weekEntriesHtml;
         }
 
         // Load data when page loads
-        document.addEventListener('DOMContentLoaded', loadWeeklyData);
+        loadWeeklyData();
 
-        // Listen for storage changes to update the display
+        // Add event listener for storage changes
         window.addEventListener('storage', function(e) {
-            if (e.key === 'timeEntries') {
+            if (e.key.startsWith('timeEntries_') || e.key === 'userSettings') {
                 loadWeeklyData();
             }
         });
-
-        // Refresh data every minute to keep it current
-        setInterval(loadWeeklyData, 60000);
     </script>
 </body>
 </html> 

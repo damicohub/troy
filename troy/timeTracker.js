@@ -1,5 +1,27 @@
 // Time tracking data management
 const TimeTracker = {
+    // Get user settings
+    getUserSettings() {
+        const settings = JSON.parse(localStorage.getItem('userSettings')) || {};
+        return {
+            timeFormat: settings.timeFormat || '24'
+        };
+    },
+
+    // Format a time string (HH:mm) according to user preferences
+    formatTimeForDisplay(timeStr) {
+        const [hours, minutes] = timeStr.split(':');
+        const date = new Date();
+        date.setHours(parseInt(hours));
+        date.setMinutes(parseInt(minutes));
+        const settings = this.getUserSettings();
+        return date.toLocaleTimeString('en-US', {
+            hour12: settings.timeFormat === '12',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    },
+
     // Get today's date in YYYY-MM-DD format
     getTodayDate() {
         const now = new Date();
@@ -57,12 +79,10 @@ const TimeTracker = {
 
     // Load time entries from localStorage for a specific date
     loadTimeEntries(date) {
-        const savedData = localStorage.getItem('timeEntries');
+        const savedData = localStorage.getItem(`timeEntries_${date}`);
         if (savedData) {
             const data = JSON.parse(savedData);
-            if (data.date === date) {
-                return data.entries;
-            }
+            return data.entries;
         }
         return [];
     },
@@ -71,18 +91,18 @@ const TimeTracker = {
     saveTimeEntries(entries, isClockedIn) {
         const today = this.getTodayDate();
         const data = {
-            date: today,
             entries: entries,
             isClockedIn: isClockedIn
         };
-        localStorage.setItem('timeEntries', JSON.stringify(data));
+        localStorage.setItem(`timeEntries_${today}`, JSON.stringify(data));
     },
 
     // Get current time in HH:mm format
     getCurrentTime() {
         const now = new Date();
+        const settings = this.getUserSettings();
         return now.toLocaleTimeString('en-US', { 
-            hour12: false,
+            hour12: settings.timeFormat === '12',
             hour: '2-digit',
             minute: '2-digit'
         });
@@ -91,8 +111,9 @@ const TimeTracker = {
     // Get current time with seconds in HH:mm:ss format
     getCurrentTimeWithSeconds() {
         const now = new Date();
+        const settings = this.getUserSettings();
         return now.toLocaleTimeString('en-US', { 
-            hour12: false,
+            hour12: settings.timeFormat === '12',
             hour: '2-digit',
             minute: '2-digit',
             second: '2-digit'

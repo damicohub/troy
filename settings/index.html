@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Damico Timecard Tracking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            line-height: 1.6;
+            color: #2d3748;
+            background-color: #f7fafc;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2c5282 0%, #2b6cb0 100%);
+            color: white;
+            padding: 0.75rem 0;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .settings-card {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+
+        .settings-section {
+            margin-bottom: 2rem;
+        }
+
+        .settings-section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: #2d3748;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .setting-item label {
+            flex: 1;
+        }
+
+        select {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            background-color: white;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        .save-button {
+            background-color: #48bb78;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .save-button:hover {
+            background-color: #38a169;
+            transform: translateY(-1px);
+        }
+
+        .save-message {
+            display: none;
+            color: #48bb78;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .save-message.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Settings</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="settings-card">
+            <div class="settings-section">
+                <h2>Time Format</h2>
+                <div class="setting-item">
+                    <label for="timeFormat">Display time in:</label>
+                    <select id="timeFormat">
+                        <option value="24">24-hour (Military Time)</option>
+                        <option value="12">12-hour (AM/PM)</option>
+                    </select>
+                </div>
+            </div>
+            <button class="save-button" onclick="saveSettings()">Save Settings</button>
+            <div class="save-message" id="saveMessage">Settings saved successfully!</div>
+        </div>
+    </main>
+
+    <script src="/troy/timeTracker.js"></script>
+    <script>
+        // Load saved settings
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('userSettings')) || {};
+            document.getElementById('timeFormat').value = settings.timeFormat || '24';
+        }
+
+        // Save settings
+        function saveSettings() {
+            const timeFormat = document.getElementById('timeFormat').value;
+            const settings = {
+                timeFormat: timeFormat
+            };
+            localStorage.setItem('userSettings', JSON.stringify(settings));
+            
+            // Show save message
+            const saveMessage = document.getElementById('saveMessage');
+            saveMessage.classList.add('show');
+            setTimeout(() => {
+                saveMessage.classList.remove('show');
+            }, 3000);
+        }
+
+        // Load settings when page loads
+        loadSettings();
+    </script>
+</body>
+</html> 
