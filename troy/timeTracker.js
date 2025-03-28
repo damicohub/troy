@@ -118,5 +118,25 @@ const TimeTracker = {
             minute: '2-digit',
             second: '2-digit'
         });
+    },
+
+    // Delete a time entry
+    deleteTimeEntry(date, index) {
+        const entries = this.loadTimeEntries(date);
+        entries.splice(index, 1);
+        this.saveTimeEntries(entries, entries.length > 0 ? entries[entries.length - 1].type === 'in' : false);
+        // Trigger storage event for other tabs
+        window.dispatchEvent(new Event('storage'));
+    },
+
+    // Update a time entry
+    updateTimeEntry(date, index, newTime) {
+        const entries = this.loadTimeEntries(date);
+        if (entries[index]) {
+            entries[index].time = newTime;
+            this.saveTimeEntries(entries, entries.length > 0 ? entries[entries.length - 1].type === 'in' : false);
+            // Trigger storage event for other tabs
+            window.dispatchEvent(new Event('storage'));
+        }
     }
 }; 
