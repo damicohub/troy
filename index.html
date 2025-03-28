@@ -348,7 +348,7 @@
             isClockedIn = true;
             updateUI();
             updateTimeEntries();
-            TimeTracker.saveTimeEntries(timeEntries, isClockedIn);
+            TimeTracker.saveTimeEntries(timeEntries, isClockedIn, TimeTracker.getTodayDate());
             toggleManualEntry();
         }
 
@@ -365,7 +365,7 @@
             isClockedIn = false;
             updateUI();
             updateTimeEntries();
-            TimeTracker.saveTimeEntries(timeEntries, isClockedIn);
+            TimeTracker.saveTimeEntries(timeEntries, isClockedIn, TimeTracker.getTodayDate());
             toggleManualEntry();
         }
 
@@ -440,7 +440,7 @@
             isClockedIn = true;
             updateUI();
             updateTimeEntries();
-            TimeTracker.saveTimeEntries(timeEntries, isClockedIn);
+            TimeTracker.saveTimeEntries(timeEntries, isClockedIn, TimeTracker.getTodayDate());
         });
 
         clockOutBtn.addEventListener('click', () => {
@@ -452,7 +452,7 @@
             isClockedIn = false;
             updateUI();
             updateTimeEntries();
-            TimeTracker.saveTimeEntries(timeEntries, isClockedIn);
+            TimeTracker.saveTimeEntries(timeEntries, isClockedIn, TimeTracker.getTodayDate());
         });
 
         // Add event listener for storage changes

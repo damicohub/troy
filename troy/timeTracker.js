@@ -88,13 +88,12 @@ const TimeTracker = {
     },
 
     // Save time entries to localStorage
-    saveTimeEntries(entries, isClockedIn) {
-        const today = this.getTodayDate();
+    saveTimeEntries(entries, isClockedIn, date) {
         const data = {
             entries: entries,
             isClockedIn: isClockedIn
         };
-        localStorage.setItem(`timeEntries_${today}`, JSON.stringify(data));
+        localStorage.setItem(`timeEntries_${date}`, JSON.stringify(data));
     },
 
     // Get current time in HH:mm format
@@ -124,7 +123,7 @@ const TimeTracker = {
     deleteTimeEntry(date, index) {
         const entries = this.loadTimeEntries(date);
         entries.splice(index, 1);
-        this.saveTimeEntries(entries, entries.length > 0 ? entries[entries.length - 1].type === 'in' : false);
+        this.saveTimeEntries(entries, entries.length > 0 ? entries[entries.length - 1].type === 'in' : false, date);
         // Trigger storage event for other tabs
         window.dispatchEvent(new Event('storage'));
     },
@@ -134,7 +133,7 @@ const TimeTracker = {
         const entries = this.loadTimeEntries(date);
         if (entries[index]) {
             entries[index].time = newTime;
-            this.saveTimeEntries(entries, entries.length > 0 ? entries[entries.length - 1].type === 'in' : false);
+            this.saveTimeEntries(entries, entries.length > 0 ? entries[entries.length - 1].type === 'in' : false, date);
             // Trigger storage event for other tabs
             window.dispatchEvent(new Event('storage'));
         }
